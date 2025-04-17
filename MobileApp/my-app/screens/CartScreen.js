@@ -1,4 +1,4 @@
-// ✅ CartScreen.js (Lưu và tải giỏ hàng từ AsyncStorage)
+// ✅ CartScreen.js (Phân biệt sản phẩm cùng ID nhưng khác màu, hiển thị màu trực quan hơn)
 import React, { useState, useLayoutEffect, useEffect } from 'react';
 import {
   View,
@@ -47,18 +47,18 @@ export default function CartScreen({ navigation }) {
     saveCart();
   }, [cart]);
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = (id, color, delta) => {
     setCart(prev =>
       prev.map(item =>
-        item.id === id
+        item.id === id && item.color === color
           ? { ...item, quantity: Math.max(1, item.quantity + delta) }
           : item
       )
     );
   };
 
-  const removeItem = (id) => {
-    setCart(prev => prev.filter(item => item.id !== id));
+  const removeItem = (id, color) => {
+    setCart(prev => prev.filter(item => !(item.id === id && item.color === color)));
   };
 
   const getTotal = () =>
@@ -70,19 +70,31 @@ export default function CartScreen({ navigation }) {
       <View style={{ flex: 1, marginLeft: 10 }}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+          <Text style={{ fontSize: 13, color: '#555' }}>Color:</Text>
+          <View
+            style={{
+              width: 16,
+              height: 16,
+              backgroundColor: item.color || 'black',
+              marginLeft: 6,
+              borderRadius: 4,
+              borderWidth: 1,
+              borderColor: '#ccc',
+            }}
+          />
+        </View>
         <View style={styles.quantityRow}>
-          <TouchableOpacity onPress={() => updateQuantity(item.id, -1)}>
+          <TouchableOpacity onPress={() => updateQuantity(item.id, item.color, -1)}>
             <Ionicons name="remove-circle-outline" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.quantity}>
-            {String(item.quantity).padStart(2, '0')}
-          </Text>
-          <TouchableOpacity onPress={() => updateQuantity(item.id, 1)}>
+          <Text style={styles.quantity}>{String(item.quantity).padStart(2, '0')}</Text>
+          <TouchableOpacity onPress={() => updateQuantity(item.id, item.color, 1)}>
             <Ionicons name="add-circle-outline" size={24} color="#000" />
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity onPress={() => removeItem(item.id)}>
+      <TouchableOpacity onPress={() => removeItem(item.id, item.color)}>
         <Ionicons name="close-outline" size={22} color="#444" />
       </TouchableOpacity>
     </View>
@@ -96,7 +108,7 @@ export default function CartScreen({ navigation }) {
       <Text style={styles.title}>My cart</Text>
       <FlatList
         data={cart}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item, index) => `${item.id}-${item.color}-${index}`}
         renderItem={renderItem}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20 }}
       />
@@ -120,6 +132,7 @@ export default function CartScreen({ navigation }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   title: {

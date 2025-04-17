@@ -51,7 +51,7 @@ export default function HomeScreen({ navigation }) {
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
-        contentContainerStyle={{ paddingHorizontal: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 20,paddingBottom: 260, }}
         renderItem={({ item }) => (
           <ProductCard item={item} navigation={navigation} />
         )}

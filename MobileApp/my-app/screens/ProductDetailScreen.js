@@ -1,4 +1,4 @@
-// ✅ ProductDetailScreen.js (Cập nhật hàm thêm vào giỏ hàng với AsyncStorage)
+// ✅ ProductDetailScreen.js (Khớp số sao từ mock + user review)
 import React, { useState, useLayoutEffect } from 'react';
 import {
   View,
@@ -10,11 +10,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProductDetailScreen({ route, navigation }) {
   const { product } = route.params;
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [userReviews, setUserReviews] = useState([]);
+  const [mockReviews, setMockReviews] = useState([]);
+  const [selectedColor, setSelectedColor] = useState('white');
+
+  const STORAGE_KEY = `reviews_${product.id}`;
+  const MOCK_KEY = `mock_reviews_${product.id}`;
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -24,20 +31,45 @@ export default function ProductDetailScreen({ route, navigation }) {
     };
   }, [navigation]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadAllReviews = async () => {
+        try {
+          const storedUser = await AsyncStorage.getItem(STORAGE_KEY);
+          if (storedUser) setUserReviews(JSON.parse(storedUser));
+
+          const storedMock = await AsyncStorage.getItem(MOCK_KEY);
+          if (storedMock) setMockReviews(JSON.parse(storedMock));
+        } catch (e) {
+          console.error('Error loading all reviews:', e);
+        }
+      };
+      loadAllReviews();
+    }, [])
+  );
+
+  const allReviews = [...userReviews, ...mockReviews];
+  const averageRating = allReviews.length
+    ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)
+    : '0.0';
+
   const handleAddToCart = async () => {
     try {
       const storedCart = await AsyncStorage.getItem('cart');
       let cart = storedCart ? JSON.parse(storedCart) : [];
 
-      const existing = cart.find((item) => item.id === product.id);
+      const existing = cart.find(
+        (item) => item.id === product.id && item.color === selectedColor
+      );
+
       if (existing) {
         cart = cart.map((item) =>
-          item.id === product.id
+          item.id === product.id && item.color === selectedColor
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       } else {
-        cart.push({ ...product, quantity });
+        cart.push({ ...product, quantity, color: selectedColor });
       }
 
       await AsyncStorage.setItem('cart', JSON.stringify(cart));
@@ -61,11 +93,26 @@ export default function ProductDetailScreen({ route, navigation }) {
           <Text style={styles.name}>{product.name}</Text>
           <Text style={styles.price}>${product.price.toFixed(2)}</Text>
 
+          <TouchableOpacity onPress={() => navigation.navigate('Review', { product })}>
+            <View style={styles.ratingRow}>
+              <Ionicons name="star" size={16} color="#f5a623" />
+              <Text style={styles.ratingText}>{averageRating}</Text>
+              <Text style={styles.reviewCount}>({allReviews.length} reviews)</Text>
+            </View>
+          </TouchableOpacity>
+
           <Text style={styles.sectionTitle}>Select Color</Text>
           <View style={styles.colors}>
-            <View style={[styles.colorBox, { backgroundColor: 'black' }]} />
-            <View style={[styles.colorBox, { backgroundColor: '#888' }]} />
-            <View style={[styles.colorBox, { backgroundColor: '#a33' }]} />
+            {['white', '#888', '#a33'].map((color) => (
+              <TouchableOpacity
+                key={color}
+                onPress={() => setSelectedColor(color)}
+                style={[styles.colorBox, { backgroundColor: color }, selectedColor === color && {
+                  borderColor: 'black',
+                  borderWidth: 2,
+                }]}
+              />
+            ))}
           </View>
 
           <Text style={styles.sectionTitle}>Description</Text>
@@ -78,7 +125,7 @@ export default function ProductDetailScreen({ route, navigation }) {
               <Ionicons name="remove-circle-outline" size={30} />
             </TouchableOpacity>
             <Text style={styles.quantity}>{quantity}</Text>
-            <TouchableOpacity onPress={() => setQuantity(quantity + 1)}>
+            <TouchableOpacity onPress={() => quantity < 10 && setQuantity(quantity + 1)}>
               <Ionicons name="add-circle-outline" size={30} />
             </TouchableOpacity>
           </View>
@@ -190,5 +237,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  reviewCount: {
+    fontSize: 13,
+    color: '#777',
+    marginLeft: 4,
   },
 });
