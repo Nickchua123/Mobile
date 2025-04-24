@@ -2,11 +2,10 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-import HomeStackNavigator from './HomeStackNavigator'; // ✅ Thay vì HomeScreen
+import HomeStackNavigator from './HomeStackNavigator';
 import BookmarkScreen from '../screens/BookmarkScreen';
 import NotificationScreen from '../screens/NotificationScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import StackNavigator from './StackNavigator'; // Tab Profile dùng Stack
+import StackNavigator from './StackNavigator'; 
 
 const Tab = createBottomTabNavigator();
 
@@ -40,6 +39,7 @@ function BottomTabNavigator() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bookmark" size={size} color={color} />
           ),
+          headerShown: false,
         }}
       />
 

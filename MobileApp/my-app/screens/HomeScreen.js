@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  TextInput,
-} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TextInput } from 'react-native';
 import Header from '../components/Header';
 import CategoryBar from '../components/CategoryBar';
 import ProductCard from '../components/ProductCard';
 import products from '../data/products';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState('Popular');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   const toggleSearch = () => setSearchVisible(!searchVisible);
 
@@ -24,19 +22,40 @@ export default function HomeScreen({ navigation }) {
     return matchCategory && matchKeyword;
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      const loadCartCount = async () => {
+        try {
+          const storedCart = await AsyncStorage.getItem('cart');
+          if (storedCart) {
+            const cartItems = JSON.parse(storedCart);
+            const total = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            setCartCount(total);
+          } else {
+            setCartCount(0);
+          }
+        } catch (error) {
+          console.error('Lỗi khi lấy giỏ hàng:', error);
+        }
+      };
+
+      loadCartCount();
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
       <Header
         navigation={navigation}
         onToggleSearch={toggleSearch}
         searchVisible={searchVisible}
+        cartCount={cartCount} // Truyền số lượng sản phẩm sang Header
       />
       <CategoryBar
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
 
-      {/* Chỉ hiện khi searchVisible = true */}
       {searchVisible && (
         <TextInput
           placeholder="Search product..."
@@ -51,7 +70,7 @@ export default function HomeScreen({ navigation }) {
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
-        contentContainerStyle={{ paddingHorizontal: 20,paddingBottom: 260, }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 260 }}
         renderItem={({ item }) => (
           <ProductCard item={item} navigation={navigation} />
         )}

@@ -5,7 +5,7 @@ const ThemeContext = createContext();
 
 // Component ThemeProvider
 function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('Dark'); // Giá trị mặc định là 'Dark'
+    const [theme, setTheme] = useState('Light'); // Giá trị mặc định là 'Dark'
 
     // Hàm toggle theme
     const toggleTheme = () => {

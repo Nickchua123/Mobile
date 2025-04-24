@@ -20,7 +20,9 @@ export default function ProfileScreen({ navigation }) {
             <View style={styles.optionsContainer}>
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigation.navigate('Orders')} // Điều hướng đến Orders Screen
+                    onPress={() => navigation.navigate('Profile', { screen: 'Orders' })}
+                    //Orders
+                
                 >
                     {/* Option */}
                     <View style={styles.optionTextContainer}>
@@ -32,7 +34,8 @@ export default function ProfileScreen({ navigation }) {
 
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigation.navigate('Address')} // Điều hướng đến ShippingAddresses Screen
+                    onPress={() => navigation.navigate('Profile', { screen: 'Address' })}
+
                 >
                     <View style={styles.optionTextContainer}>
                         <Text style={styles.optionText}>Địa chỉ đặt hàng</Text>
@@ -43,7 +46,9 @@ export default function ProfileScreen({ navigation }) {
 
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigation.navigate('PaymentMethod')} // Điều hướng đến PaymentMethod Screen
+                    onPress={() => navigation.navigate('Profile', { screen: 'PaymentMethod' })}
+
+                    // Điều hướng đến PaymentMethod Screen
                 >
                     <View style={styles.optionTextContainer}>
                         <Text style={styles.optionText}>Phương thức thanh toán</Text>
@@ -54,7 +59,7 @@ export default function ProfileScreen({ navigation }) {
 
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigation.navigate('Reviews')} // Điều hướng đến Reviews Screen
+                    onPress={() => navigation.navigate('MyReviews')} // Điều hướng đến Reviews Screen
                 >
                     <View style={styles.optionTextContainer}>
                         <Text style={styles.optionText}>Đánh giá của tôi</Text>

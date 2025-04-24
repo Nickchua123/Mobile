@@ -1,4 +1,3 @@
-// ✅ CartScreen.js (Phân biệt sản phẩm cùng ID nhưng khác màu, hiển thị màu trực quan hơn)
 import React, { useState, useLayoutEffect, useEffect } from 'react';
 import {
   View,
@@ -8,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function CartScreen({ navigation }) {
   const [cart, setCart] = useState([]);
   const [promoCode, setPromoCode] = useState('');
+  const [selectedItems, setSelectedItems] = useState([]);
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -59,13 +60,45 @@ export default function CartScreen({ navigation }) {
 
   const removeItem = (id, color) => {
     setCart(prev => prev.filter(item => !(item.id === id && item.color === color)));
+    setSelectedItems(prev => prev.filter(key => key !== `${id}-${color}`));
   };
 
+  const toggleSelect = (id, color) => {
+    const key = `${id}-${color}`;
+    setSelectedItems(prev =>
+      prev.includes(key)
+        ? prev.filter(item => item !== key)
+        : [...prev, key]
+    );
+  };
+
+  const isSelected = (id, color) => selectedItems.includes(`${id}-${color}`);
+
+  const toggleSelectAll = () => {
+    if (selectedItems.length === cart.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(cart.map(item => `${item.id}-${item.color}`));
+    }
+  };
+
+  const isAllSelected = selectedItems.length === cart.length && cart.length > 0;
+
   const getTotal = () =>
-    cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cart
+      .filter(item => isSelected(item.id, item.color))
+      .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const renderItem = ({ item }) => (
     <View style={styles.item}>
+      <TouchableOpacity onPress={() => toggleSelect(item.id, item.color)}>
+        <Ionicons
+          name={isSelected(item.id, item.color) ? 'checkbox' : 'square-outline'}
+          size={24}
+          color={isSelected(item.id, item.color) ? '#3B82F6' : '#ccc'}
+          style={{ marginRight: 8 }}
+        />
+      </TouchableOpacity>
       <Image source={item.img} style={styles.image} />
       <View style={{ flex: 1, marginLeft: 10 }}>
         <Text style={styles.name}>{item.name}</Text>
@@ -94,7 +127,18 @@ export default function CartScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity onPress={() => removeItem(item.id, item.color)}>
+      <TouchableOpacity
+        onPress={() =>
+          Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?', [
+            { text: 'Huỷ', style: 'cancel' },
+            {
+              text: 'Xoá',
+              onPress: () => removeItem(item.id, item.color),
+              style: 'destructive',
+            },
+          ])
+        }
+      >
         <Ionicons name="close-outline" size={22} color="#444" />
       </TouchableOpacity>
     </View>
@@ -106,12 +150,36 @@ export default function CartScreen({ navigation }) {
         <Ionicons name="arrow-back" size={24} color="#000" />
       </TouchableOpacity>
       <Text style={styles.title}>My cart</Text>
+
+      <View
+  style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    padding: 7,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 10,
+  }}
+>
+  <TouchableOpacity onPress={toggleSelectAll} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Ionicons
+      name={isAllSelected ? 'checkbox' : 'square-outline'}
+      size={24}
+      color={isAllSelected ? '#3B82F6' : '#ccc'}
+      style={{ marginRight: 8 }}
+    />
+    <Text style={{ fontWeight: 'bold', color: '#000' }}>Chọn tất cả</Text>
+  </TouchableOpacity>
+</View>
+
+
       <FlatList
         data={cart}
         keyExtractor={(item, index) => `${item.id}-${item.color}-${index}`}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 20 }}
       />
+
       <View style={styles.promoRow}>
         <TextInput
           value={promoCode}
@@ -123,9 +191,25 @@ export default function CartScreen({ navigation }) {
           <Ionicons name="arrow-forward" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
+
       <View style={styles.footer}>
         <Text style={styles.total}>Total: ${getTotal().toFixed(2)}</Text>
-        <TouchableOpacity style={styles.checkoutButton}>
+        <TouchableOpacity
+          style={styles.checkoutButton}
+          onPress={() => {
+            const selectedData = cart.filter(item =>
+              selectedItems.includes(`${item.id}-${item.color}`)
+            );
+            if (selectedData.length === 0) {
+              Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+              return;
+            }
+            navigation.navigate('Home', {
+              screen: 'Checkout',
+              params: { selectedItems: selectedData },
+            });
+          }}
+        >
           <Text style={styles.checkoutText}>Check out</Text>
         </TouchableOpacity>
       </View>

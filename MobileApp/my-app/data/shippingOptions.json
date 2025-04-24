@@ -1,0 +1,17 @@
+[
+    {
+        "id": "fast",
+        "label": "🚀 Giao nhanh (1-2 ngày)",
+        "fee": 5.0
+    },
+    {
+        "id": "standard",
+        "label": "📦 Giao tiêu chuẩn (3-5 ngày)",
+        "fee": 2.5
+    },
+    {
+        "id": "economy",
+        "label": "🐢 Giao tiết kiệm (5-7 ngày)",
+        "fee": 0
+    }
+]

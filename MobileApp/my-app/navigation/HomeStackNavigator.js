@@ -4,6 +4,10 @@ import HomeScreen from '../screens/HomeScreen';
 import ProductDetailScreen from '../screens/ProductDetailScreen';
 import CartScreen from '../screens/CartScreen'; 
 import ReviewScreen from '../screens/ReviewScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
+import SuccessScreen from '../screens/SuccessScreen';
+
+
 const Stack = createStackNavigator();
 
 export default function HomeStackNavigator() {
@@ -28,7 +32,18 @@ export default function HomeStackNavigator() {
         name="Review"
         component={ReviewScreen}
         options={{ headerShown: false }}
-/>
+      />
+      <Stack.Screen
+        name="Checkout"
+        component={CheckoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+       name="Success"
+       component={SuccessScreen} 
+       options={{ headerShown: false }} 
+       />
+       
     </Stack.Navigator>
   );
 }

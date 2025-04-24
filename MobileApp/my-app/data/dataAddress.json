@@ -1,0 +1,17 @@
+[
+    {
+      "id": "1",
+      "name": "Nguyễn Văn A",
+      "phone": "0123456789",
+      "address": "Số 1, phố Nguyễn Trãi, Thanh Xuân, Hà Nội",
+      "isDefault": true
+    },
+    {
+      "id": "2",
+      "name": "Trần Thị B",
+      "phone": "0987654321",
+      "address": "Số 5, đường Hoàng Hoa Thám, Ba Đình, Hà Nội",
+      "isDefault": false
+    }
+  ]
+  

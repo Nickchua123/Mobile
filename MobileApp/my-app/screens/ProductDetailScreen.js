@@ -1,12 +1,6 @@
-// ✅ ProductDetailScreen.js (Khớp số sao từ mock + user review)
 import React, { useState, useLayoutEffect } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
+  View, Text, Image, StyleSheet, TouchableOpacity, ScrollView,Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,6 +16,7 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   const STORAGE_KEY = `reviews_${product.id}`;
   const MOCK_KEY = `mock_reviews_${product.id}`;
+  const FAVORITE_KEY = 'favorites';
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -33,18 +28,23 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   useFocusEffect(
     React.useCallback(() => {
-      const loadAllReviews = async () => {
+      const loadAll = async () => {
         try {
           const storedUser = await AsyncStorage.getItem(STORAGE_KEY);
           if (storedUser) setUserReviews(JSON.parse(storedUser));
 
           const storedMock = await AsyncStorage.getItem(MOCK_KEY);
           if (storedMock) setMockReviews(JSON.parse(storedMock));
+
+          const storedFav = await AsyncStorage.getItem(FAVORITE_KEY);
+          const favList = storedFav ? JSON.parse(storedFav) : [];
+          const isFav = favList.some((p) => p.id === product.id);
+          setIsFavorite(isFav);
         } catch (e) {
-          console.error('Error loading all reviews:', e);
+          console.error('Lỗi khi load dữ liệu:', e);
         }
       };
-      loadAllReviews();
+      loadAll();
     }, [])
   );
 
@@ -73,9 +73,28 @@ export default function ProductDetailScreen({ route, navigation }) {
       }
 
       await AsyncStorage.setItem('cart', JSON.stringify(cart));
-      alert('Đã thêm vào giỏ hàng!');
+      Alert.alert('🛒 Thành công', 'Đã thêm vào giỏ hàng!');
     } catch (error) {
       console.error('Lỗi khi thêm vào giỏ hàng:', error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(FAVORITE_KEY);
+      let favorites = stored ? JSON.parse(stored) : [];
+
+      if (isFavorite) {
+        favorites = favorites.filter((p) => p.id !== product.id);
+        setIsFavorite(false);
+      } else {
+        favorites.push({ ...product, color: selectedColor });
+        setIsFavorite(true);
+      }
+
+      await AsyncStorage.setItem(FAVORITE_KEY, JSON.stringify(favorites));
+    } catch (error) {
+      console.error('Lỗi khi toggle favorite:', error);
     }
   };
 
@@ -107,10 +126,14 @@ export default function ProductDetailScreen({ route, navigation }) {
               <TouchableOpacity
                 key={color}
                 onPress={() => setSelectedColor(color)}
-                style={[styles.colorBox, { backgroundColor: color }, selectedColor === color && {
-                  borderColor: 'black',
-                  borderWidth: 2,
-                }]}
+                style={[
+                  styles.colorBox,
+                  { backgroundColor: color },
+                  selectedColor === color && {
+                    borderColor: 'black',
+                    borderWidth: 2,
+                  },
+                ]}
               />
             ))}
           </View>
@@ -131,10 +154,7 @@ export default function ProductDetailScreen({ route, navigation }) {
           </View>
 
           <View style={styles.footerRow}>
-            <TouchableOpacity
-              style={styles.bookmarkButton}
-              onPress={() => setIsFavorite(!isFavorite)}
-            >
+            <TouchableOpacity style={styles.bookmarkButton} onPress={handleToggleFavorite}>
               <Ionicons
                 name={isFavorite ? 'bookmark' : 'bookmark-outline'}
                 size={24}
@@ -175,24 +195,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
-  name: {
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  price: {
-    fontSize: 18,
-    color: '#888',
-    marginTop: 5,
-  },
-  sectionTitle: {
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  colors: {
-    flexDirection: 'row',
-    gap: 10,
-  },
+  name: { fontSize: 22, fontWeight: 'bold' },
+  price: { fontSize: 18, color: '#888', marginTop: 5 },
+  sectionTitle: { fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
+  colors: { flexDirection: 'row', gap: 10 },
   colorBox: {
     width: 32,
     height: 32,
@@ -211,10 +217,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 20,
   },
-  quantity: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  quantity: { fontSize: 18, fontWeight: 'bold' },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
