@@ -1,10 +1,10 @@
-// screens/SignUp.js
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, TouchableWithoutFeedback, Keyboard
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import authApi from '../api/authApi'; // Đảm bảo đường dẫn đúng
 
 export default function SignUpScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -14,7 +14,10 @@ export default function SignUpScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
+    console.log('authApi object:', authApi);
+    console.log('authApi.signUp:', authApi.signUp);
+
     if (!name || !email || !password || !confirm) {
       alert('Vui lòng nhập đầy đủ thông tin!');
       return;
@@ -23,8 +26,29 @@ export default function SignUpScreen({ navigation }) {
       alert('Mật khẩu không khớp!');
       return;
     }
-    alert('Đăng ký thành công!'); // Có thể thay bằng lưu vào API / local
-    navigation.navigate('Login');
+
+    try {
+      // Gọi API đăng ký
+      const response = await authApi.signUp({
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+      });
+      console.log("Test:", authApi); // xem có hàm signUp không
+      if (response.status === 201) {
+        alert('Đăng ký thành công!');
+        navigation.navigate('Login');
+      } else {
+        alert('Đăng ký thất bại, vui lòng thử lại.');
+      }
+    } catch (error) {
+      if (error.response?.status === 400) {
+        alert('Email đã tồn tại!');
+      } else {
+        alert('Lỗi kết nối máy chủ, vui lòng thử lại.');
+      }
+      console.error(error);
+    }
   };
 
   return (
@@ -43,6 +67,8 @@ export default function SignUpScreen({ navigation }) {
             style={styles.input}
             placeholder="Email"
             value={email}
+            keyboardType="email-address"
+            autoCapitalize="none"
             onChangeText={setEmail}
           />
           <View style={styles.passwordBox}>
