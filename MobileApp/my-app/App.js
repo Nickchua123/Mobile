@@ -16,6 +16,7 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
+
     </Stack.Navigator>
   );
 }
@@ -40,7 +41,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <AddressProvider> 
+        <AddressProvider>
           <AppWrapper />
         </AddressProvider>
       </ThemeProvider>

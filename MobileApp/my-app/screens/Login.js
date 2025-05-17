@@ -7,25 +7,67 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { ThemeContext } from '../contexts/ThemeContext';
+import authApi from '../api/authApi'; // Kết nối API
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
-  const { theme, toggleTheme } = useContext(ThemeContext);
   const { login } = useAuth();
+  const { theme, toggleTheme } = useContext(ThemeContext);
 
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const [loading, setLoading] = useState(false);
+  const role = "USER";
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
 
+  const handleLogin = async () => {
+    console.log("Đang gửi lên:", {
+      username: email.trim(), // ✅ đúng field
+      password,
+      role: "USER"
+    });
+
+    if (!email || !password) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đầy đủ Email và Mật khẩu');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authApi.login({
+        username: email.trim(),
+        password,
+        role
+      });
+      const { accessToken } = response.data.data.accessToken;
+      await login(accessToken); // Lưu token vào context
+      // Lưu token vào AsyncStorage
+      await AsyncStorage.setItem('accessToken', response.data.data.accessToken);
+      Alert.alert('Thành công', 'Đăng nhập thành công!');
+      // Chuyển hướng hoặc gọi useAuth().login() nếu có context
+      navigation.navigate('HomeScreen'); // Navigate sang trang chủ 
+    } catch (error) {
+      if (error.response?.status === 401) {
+        Alert.alert('Lỗi', 'Tài khoản hoặc mật khẩu không đúng.');
+      } else {
+        Alert.alert('Lỗi', 'Không thể kết nối đến máy chủ.');
+      }
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={[styles.container, { backgroundColor: theme === 'Dark' ? '#333' : '#fff' }]}>
         <Text style={[styles.greeting, { color: theme === 'Dark' ? '#fff' : '#000' }]}>Hello !</Text>
         <Text style={[styles.welcomeBack, { color: theme === 'Dark' ? '#ccc' : '#888' }]}>WELCOME BACK</Text>
@@ -43,6 +85,8 @@ const LoginScreen = ({ navigation }) => {
             placeholderTextColor={theme === 'Dark' ? '#ccc' : '#aaa'}
             value={email}
             onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
           <View style={styles.passwordContainer}>
@@ -74,8 +118,8 @@ const LoginScreen = ({ navigation }) => {
             <Text style={styles.forgotPasswordText}>Forgot Password</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton} onPress={login}>
-            <Text style={styles.buttonText}>Log in</Text>
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+            <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Log in'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.signUpButton} onPress={() => navigation.navigate('SignUp')}>
