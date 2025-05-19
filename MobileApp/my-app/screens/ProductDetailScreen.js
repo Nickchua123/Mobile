@@ -1,21 +1,19 @@
 import React, { useState, useLayoutEffect } from 'react';
 import {
-  View, Text, Image, StyleSheet, TouchableOpacity, ScrollView,Alert,
+  View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import productApi from '../api/productApi';
 
 export default function ProductDetailScreen({ route, navigation }) {
-  const { product } = route.params;
+  const { productId } = route.params;
+  const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [userReviews, setUserReviews] = useState([]);
-  const [mockReviews, setMockReviews] = useState([]);
   const [selectedColor, setSelectedColor] = useState('white');
 
-  const STORAGE_KEY = `reviews_${product.id}`;
-  const MOCK_KEY = `mock_reviews_${product.id}`;
   const FAVORITE_KEY = 'favorites';
 
   useLayoutEffect(() => {
@@ -28,31 +26,37 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   useFocusEffect(
     React.useCallback(() => {
-      const loadAll = async () => {
+      const loadProduct = async () => {
         try {
-          const storedUser = await AsyncStorage.getItem(STORAGE_KEY);
-          if (storedUser) setUserReviews(JSON.parse(storedUser));
+          const res = await productApi.getById(productId);
+          const data = res?.data?.data || res?.data;
 
-          const storedMock = await AsyncStorage.getItem(MOCK_KEY);
-          if (storedMock) setMockReviews(JSON.parse(storedMock));
+          setProduct(data);
 
           const storedFav = await AsyncStorage.getItem(FAVORITE_KEY);
           const favList = storedFav ? JSON.parse(storedFav) : [];
-          const isFav = favList.some((p) => p.id === product.id);
+          const isFav = favList.some((p) => p.id === data.id);
           setIsFavorite(isFav);
         } catch (e) {
-          console.error('Lỗi khi load dữ liệu:', e);
+          console.error('❌ Lỗi khi load sản phẩm:', e);
         }
       };
-      loadAll();
-    }, [])
+
+      loadProduct();
+    }, [productId])
   );
 
-  const allReviews = [...userReviews, ...mockReviews];
-  const averageRating = allReviews.length
-    ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)
-    : '0.0';
+  if (!product) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Đang tải chi tiết sản phẩm...</Text>
+      </View>
+    );
+  }
 
+  const imageUrl =
+    product.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image';
+  console.log("Anh la: ", imageUrl);
   const handleAddToCart = async () => {
     try {
       const storedCart = await AsyncStorage.getItem('cart');
@@ -102,7 +106,7 @@ export default function ProductDetailScreen({ route, navigation }) {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
         <View>
-          <Image source={product.img} style={styles.image} />
+          <Image source={{ uri: imageUrl }} style={styles.image} />
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#000" />
           </TouchableOpacity>
@@ -110,17 +114,9 @@ export default function ProductDetailScreen({ route, navigation }) {
 
         <View style={styles.content}>
           <Text style={styles.name}>{product.name}</Text>
-          <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+          <Text style={styles.price}>{product.price.toLocaleString()} đ</Text>
 
-          <TouchableOpacity onPress={() => navigation.navigate('Review', { product })}>
-            <View style={styles.ratingRow}>
-              <Ionicons name="star" size={16} color="#f5a623" />
-              <Text style={styles.ratingText}>{averageRating}</Text>
-              <Text style={styles.reviewCount}>({allReviews.length} reviews)</Text>
-            </View>
-          </TouchableOpacity>
-
-          <Text style={styles.sectionTitle}>Select Color</Text>
+          <Text style={styles.sectionTitle}>Chọn màu</Text>
           <View style={styles.colors}>
             {['white', '#888', '#a33'].map((color) => (
               <TouchableOpacity
@@ -138,10 +134,8 @@ export default function ProductDetailScreen({ route, navigation }) {
             ))}
           </View>
 
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>
-            This is a stylish and minimalistic piece of furniture perfect for any modern home.
-          </Text>
+          <Text style={styles.sectionTitle}>Mô tả</Text>
+          <Text style={styles.description}>{product.description || 'Không có mô tả.'}</Text>
 
           <View style={styles.quantityRow}>
             <TouchableOpacity onPress={() => quantity > 1 && setQuantity(quantity - 1)}>
@@ -163,7 +157,7 @@ export default function ProductDetailScreen({ route, navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.addButton} onPress={handleAddToCart}>
-              <Text style={styles.addButtonText}>Add to Cart</Text>
+              <Text style={styles.addButtonText}>Thêm vào giỏ</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -180,7 +174,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     resizeMode: 'cover',
-    marginLeft: '10%',
   },
   backButton: {
     position: 'absolute',
@@ -240,20 +233,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  reviewCount: {
-    fontSize: 13,
-    color: '#777',
-    marginLeft: 4,
   },
 });

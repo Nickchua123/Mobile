@@ -25,8 +25,11 @@ export default function HomeScreen({ navigation }) {
   const loadProducts = async () => {
     if (loading || !hasMore) return;
     setLoading(true);
+
     try {
       const res = await productApi.getAll(page, 10);
+      console.log("RES là :", res);
+
       const newProducts = res?.data?.data?.data?.result || [];
       const meta = res?.data?.data?.data?.meta || {};
 
@@ -36,6 +39,7 @@ export default function HomeScreen({ navigation }) {
       setHasMore(page + 1 < meta.pages);
       setPage((prev) => prev + 1);
     } catch (err) {
+
       console.error('❌ Lỗi tải sản phẩm:', err);
     } finally {
       setLoading(false);
@@ -92,8 +96,8 @@ export default function HomeScreen({ navigation }) {
     const matchKeyword = p.name.toLowerCase().includes(searchKeyword.toLowerCase());
     return matchCategory && matchKeyword;
   });
-  console.log('📦 Product sample:', products[0]);
-  console.log('🔎 Selected category:', selectedCategory);
+  // console.log('📦 Product sample:', products[0]);
+  // console.log('🔎 Selected category:', selectedCategory);
 
 
   return (

@@ -11,7 +11,7 @@ export default function ProductCard({ item, navigation }) {
         <Image source={{ uri: imageUrl }} style={styles.img} />
         <TouchableOpacity
           style={styles.cartButton}
-          onPress={() => navigation.navigate('ProductDetail', { product: item })}
+          onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
         >
           <Ionicons name="bag-outline" size={20} color="#555" />
         </TouchableOpacity>
