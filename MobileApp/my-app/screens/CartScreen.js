@@ -1,190 +1,130 @@
-import React, { useState, useLayoutEffect, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  Alert,
+  View, Text, FlatList, Image, TouchableOpacity, TextInput, Alert, StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import cartApi from '../api/cartApi';
+import { useNavigation } from '@react-navigation/native';
 
-export default function CartScreen({ navigation }) {
+export default function CartScreen() {
+  const navigation = useNavigation();
   const [cart, setCart] = useState([]);
   const [promoCode, setPromoCode] = useState('');
   const [selectedItems, setSelectedItems] = useState([]);
 
-  useLayoutEffect(() => {
-    const parent = navigation.getParent();
-    parent?.setOptions({ tabBarStyle: { display: 'none' } });
-    return () => {
-      parent?.setOptions({ tabBarStyle: { display: 'flex' } });
-    };
-  }, [navigation]);
-
   useEffect(() => {
-    const loadCart = async () => {
+    const fetchCart = async () => {
       try {
-        const storedCart = await AsyncStorage.getItem('cart');
-        if (storedCart) setCart(JSON.parse(storedCart));
+        const response = await cartApi.getMyCart();
+        setCart(response.data.data);
+        setSelectedItems([]);
       } catch (error) {
-        console.error('Lỗi khi load cart từ AsyncStorage:', error);
+        console.error('Lỗi lấy giỏ hàng:', error);
       }
     };
-    loadCart();
+
+    fetchCart();
   }, []);
 
-  useEffect(() => {
-    const saveCart = async () => {
-      try {
-        await AsyncStorage.setItem('cart', JSON.stringify(cart));
-      } catch (error) {
-        console.error('Lỗi khi lưu cart:', error);
-      }
-    };
-    saveCart();
-  }, [cart]);
-
-  const updateQuantity = (id, color, delta) => {
-    setCart(prev =>
-      prev.map(item =>
-        item.id === id && item.color === color
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
+  const toggleSelect = (id) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
-
-  const removeItem = (id, color) => {
-    setCart(prev => prev.filter(item => !(item.id === id && item.color === color)));
-    setSelectedItems(prev => prev.filter(key => key !== `${id}-${color}`));
-  };
-
-  const toggleSelect = (id, color) => {
-    const key = `${id}-${color}`;
-    setSelectedItems(prev =>
-      prev.includes(key)
-        ? prev.filter(item => item !== key)
-        : [...prev, key]
-    );
-  };
-
-  const isSelected = (id, color) => selectedItems.includes(`${id}-${color}`);
 
   const toggleSelectAll = () => {
     if (selectedItems.length === cart.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cart.map(item => `${item.id}-${item.color}`));
+      setSelectedItems(cart.map((item) => item.id));
     }
   };
 
+  const isSelected = (id) => selectedItems.includes(id);
   const isAllSelected = selectedItems.length === cart.length && cart.length > 0;
 
   const getTotal = () =>
     cart
-      .filter(item => isSelected(item.id, item.color))
-      .reduce((sum, item) => sum + item.price * item.quantity, 0);
+      .filter((item) => isSelected(item.id))
+      .reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-  const renderItem = ({ item }) => (
-    <View style={styles.item}>
-      <TouchableOpacity onPress={() => toggleSelect(item.id, item.color)}>
-        <Ionicons
-          name={isSelected(item.id, item.color) ? 'checkbox' : 'square-outline'}
-          size={24}
-          color={isSelected(item.id, item.color) ? '#3B82F6' : '#ccc'}
-          style={{ marginRight: 8 }}
-        />
-      </TouchableOpacity>
-      <Image source={item.img} style={styles.image} />
-      <View style={{ flex: 1, marginLeft: 10 }}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-          <Text style={{ fontSize: 13, color: '#555' }}>Color:</Text>
-          <View
-            style={{
-              width: 16,
-              height: 16,
-              backgroundColor: item.color || 'black',
-              marginLeft: 6,
-              borderRadius: 4,
-              borderWidth: 1,
-              borderColor: '#ccc',
-            }}
+  const renderItem = ({ item }) => {
+    const imageUrl = item.product.images?.[0]?.replace('localhost', '10.0.2.2');
+
+    const handleRemoveItem = () => {
+      Alert.alert('Xác nhận', 'Bạn có chắc muốn xoá sản phẩm này khỏi giỏ hàng?', [
+        { text: 'Huỷ', style: 'cancel' },
+        {
+          text: 'Xoá',
+          onPress: async () => {
+            try {
+              await cartApi.deleteCartItem(item.product.id);
+              setCart((prev) => prev.filter((i) => i.id !== item.id));
+              setSelectedItems((prev) => prev.filter((id) => id !== item.id));
+            } catch (error) {
+              console.error('Lỗi khi xoá item:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]);
+    };
+
+    return (
+      <View style={styles.item}>
+        <TouchableOpacity onPress={() => toggleSelect(item.id)}>
+          <Ionicons
+            name={isSelected(item.id) ? 'checkbox' : 'square-outline'}
+            size={24}
+            color={isSelected(item.id) ? '#3B82F6' : '#ccc'}
+            style={{ marginRight: 8 }}
           />
+        </TouchableOpacity>
+
+        <Image source={{ uri: imageUrl }} style={styles.image} />
+
+        <View style={{ flex: 1, marginLeft: 10 }}>
+          <Text style={styles.name}>{item.product.name}</Text>
+          <Text style={styles.price}>{item.product.price.toLocaleString()} VND</Text>
+          <Text style={styles.quantity}>Số lượng: {item.quantity}</Text>
         </View>
-        <View style={styles.quantityRow}>
-          <TouchableOpacity onPress={() => updateQuantity(item.id, item.color, -1)}>
-            <Ionicons name="remove-circle-outline" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.quantity}>{String(item.quantity).padStart(2, '0')}</Text>
-          <TouchableOpacity onPress={() => updateQuantity(item.id, item.color, 1)}>
-            <Ionicons name="add-circle-outline" size={24} color="#000" />
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity onPress={handleRemoveItem}>
+          <Ionicons name="close-outline" size={22} color="#444" />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        onPress={() =>
-          Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?', [
-            { text: 'Huỷ', style: 'cancel' },
-            {
-              text: 'Xoá',
-              onPress: () => removeItem(item.id, item.color),
-              style: 'destructive',
-            },
-          ])
-        }
-      >
-        <Ionicons name="close-outline" size={22} color="#444" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color="#000" />
-      </TouchableOpacity>
-      <Text style={styles.title}>My cart</Text>
+      <Text style={styles.title}>Giỏ hàng của bạn</Text>
 
-      <View
-  style={{
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    padding: 7,
-    backgroundColor: '#F5F5F5',
-    marginBottom: 10,
-  }}
->
-  <TouchableOpacity onPress={toggleSelectAll} style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Ionicons
-      name={isAllSelected ? 'checkbox' : 'square-outline'}
-      size={24}
-      color={isAllSelected ? '#3B82F6' : '#ccc'}
-      style={{ marginRight: 8 }}
-    />
-    <Text style={{ fontWeight: 'bold', color: '#000' }}>Chọn tất cả</Text>
-  </TouchableOpacity>
-</View>
-
+      <View style={styles.selectAllRow}>
+        <TouchableOpacity onPress={toggleSelectAll} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons
+            name={isAllSelected ? 'checkbox' : 'square-outline'}
+            size={24}
+            color={isAllSelected ? '#3B82F6' : '#ccc'}
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.selectAllText}>Chọn tất cả</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={cart}
-        keyExtractor={(item, index) => `${item.id}-${item.color}-${index}`}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingHorizontal: 20 }}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Không có sản phẩm nào.</Text>}
       />
 
       <View style={styles.promoRow}>
         <TextInput
           value={promoCode}
           onChangeText={setPromoCode}
-          placeholder="Enter your promo code"
+          placeholder="Mã giảm giá"
           style={styles.input}
         />
         <TouchableOpacity style={styles.promoButton}>
@@ -193,24 +133,19 @@ export default function CartScreen({ navigation }) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.total}>Total: ${getTotal().toFixed(2)}</Text>
+        <Text style={styles.total}>Tổng: {getTotal().toLocaleString()} VND</Text>
         <TouchableOpacity
           style={styles.checkoutButton}
           onPress={() => {
-            const selectedData = cart.filter(item =>
-              selectedItems.includes(`${item.id}-${item.color}`)
-            );
+            const selectedData = cart.filter((item) => isSelected(item.id));
             if (selectedData.length === 0) {
-              Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+              Alert.alert('Thông báo', 'Bạn chưa chọn sản phẩm nào để thanh toán.');
               return;
             }
-            navigation.navigate('Home', {
-              screen: 'Checkout',
-              params: { selectedItems: selectedData },
-            });
+            navigation.navigate('Checkout', { selectedItems: selectedData });
           }}
         >
-          <Text style={styles.checkoutText}>Check out</Text>
+          <Text style={styles.checkoutText}>Thanh toán</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -219,13 +154,7 @@ export default function CartScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    alignSelf: 'center',
-    marginTop: 50,
-    marginBottom: 10,
-  },
+  title: { fontSize: 18, fontWeight: 'bold', alignSelf: 'center', marginTop: 40, marginBottom: 10 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -236,17 +165,15 @@ const styles = StyleSheet.create({
   },
   image: { width: 80, height: 80, borderRadius: 10 },
   name: { fontWeight: '600', fontSize: 16 },
-  price: { marginVertical: 6, color: '#888' },
-  quantityRow: {
+  price: { marginVertical: 4, color: '#888' },
+  quantity: { color: '#555', fontSize: 14 },
+  selectAllRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    marginBottom: 10,
+    paddingHorizontal: 20,
   },
-  quantity: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginHorizontal: 10,
-  },
+  selectAllText: { fontWeight: 'bold', color: '#000' },
   promoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -281,14 +208,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkoutText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 6,
-    elevation: 3,
-    zIndex: 10,
-  },
 });
