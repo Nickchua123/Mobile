@@ -27,10 +27,11 @@ const LoginScreen = ({ navigation }) => {
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
+  // console.log("Current routes:", navigation.getState());
 
   const handleLogin = async () => {
     console.log("Đang gửi lên:", {
-      username: email.trim(), // ✅ đúng field
+      username: email.trim(), // 
       password,
       role: "USER"
     });
@@ -47,13 +48,18 @@ const LoginScreen = ({ navigation }) => {
         password,
         role
       });
-      const { accessToken } = response.data.data.accessToken;
+      const accessToken = response?.data?.data?.accessToken;
+
+      console.log("AccessToken:", response.data.data.accessToken)
       await login(accessToken); // Lưu token vào context
       // Lưu token vào AsyncStorage
       await AsyncStorage.setItem('accessToken', response.data.data.accessToken);
+
       Alert.alert('Thành công', 'Đăng nhập thành công!');
       // Chuyển hướng hoặc gọi useAuth().login() nếu có context
-      navigation.navigate('HomeScreen'); // Navigate sang trang chủ 
+      // navigation.replace('HomeScreen'); // Navigate sang trang chủ 
+      navigation.replace('MainTabs');
+
     } catch (error) {
       if (error.response?.status === 401) {
         Alert.alert('Lỗi', 'Tài khoản hoặc mật khẩu không đúng.');
@@ -122,7 +128,11 @@ const LoginScreen = ({ navigation }) => {
             <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Log in'}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.signUpButton} onPress={() => navigation.navigate('SignUp')}>
+          <TouchableOpacity
+            style={styles.signUpButton}
+            onPress={() => navigation.replace('SignUp')
+            }
+          >
             <Text style={styles.signUpText}>
               Don't have an account? <Text style={{ fontWeight: 'bold' }}>SIGN UP</Text>
             </Text>

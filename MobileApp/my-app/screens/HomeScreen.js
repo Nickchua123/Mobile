@@ -28,12 +28,12 @@ export default function HomeScreen({ navigation }) {
 
     try {
       const res = await productApi.getAll(page, 10);
-      console.log("RES là :", res);
+      // console.log("RES là :", res);
 
       const newProducts = res?.data?.data?.data?.result || [];
       const meta = res?.data?.data?.data?.meta || {};
 
-      console.log('🧪 Loaded products:', newProducts);
+      // console.log('🧪 Loaded products:', newProducts);
 
       setProducts((prev) => [...prev, ...newProducts]);
       setHasMore(page + 1 < meta.pages);

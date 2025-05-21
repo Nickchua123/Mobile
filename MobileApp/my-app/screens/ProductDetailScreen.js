@@ -1,4 +1,5 @@
 import React, { useState, useLayoutEffect } from 'react';
+import cartApi from '../api/cartApi';
 import {
   View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert,
 } from 'react-native';
@@ -54,32 +55,23 @@ export default function ProductDetailScreen({ route, navigation }) {
     );
   }
 
-  const imageUrl =
-    product.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image';
+  const imageUrl = product.images?.[0]?.replace('localhost', '10.0.2.2');
+
   console.log("Anh la: ", imageUrl);
+
   const handleAddToCart = async () => {
     try {
-      const storedCart = await AsyncStorage.getItem('cart');
-      let cart = storedCart ? JSON.parse(storedCart) : [];
+      const body = {
+        productId: product.id,
+        quantity,
+      };
 
-      const existing = cart.find(
-        (item) => item.id === product.id && item.color === selectedColor
-      );
+      await cartApi.addToCart(body); // ✅ Gửi lên BE
 
-      if (existing) {
-        cart = cart.map((item) =>
-          item.id === product.id && item.color === selectedColor
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        cart.push({ ...product, quantity, color: selectedColor });
-      }
-
-      await AsyncStorage.setItem('cart', JSON.stringify(cart));
       Alert.alert('🛒 Thành công', 'Đã thêm vào giỏ hàng!');
     } catch (error) {
-      console.error('Lỗi khi thêm vào giỏ hàng:', error);
+      console.error('❌ Lỗi khi thêm vào giỏ hàng:', error);
+      Alert.alert('Lỗi', 'Không thể thêm vào giỏ hàng.');
     }
   };
 

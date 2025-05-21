@@ -1,13 +1,32 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 
 export default function ProfileScreen({ navigation }) {
+    const handleLogout = () => {
+        Alert.alert(
+            'Xác nhận đăng xuất',
+            'Bạn có chắc chắn muốn đăng xuất?',
+            [
+                {
+                    text: 'Huỷ',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Đăng xuất',
+                    style: 'destructive',
+                    onPress: () => navigation.replace('Login'),
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+
     return (
         <View style={styles.container}>
             {/* Profile Image and Info */}
             <View style={styles.profileContainer}>
                 <Image
-                    source={require('../assets/image/Admin.jpg')} // Đảm bảo đường dẫn ảnh chính xác
+                    source={require('../assets/image/Admin.jpg')}
                     style={styles.profileImage}
                 />
                 <View style={styles.profileInfo}>
@@ -18,83 +37,45 @@ export default function ProfileScreen({ navigation }) {
 
             {/* List of Profile Options */}
             <View style={styles.optionsContainer}>
-                <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => navigation.navigate('Profile', { screen: 'Orders' })}
-                    //Orders
-                
-                >
-                    {/* Option */}
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionText}>Đơn hàng của tôi</Text>
-                        <Text style={styles.optionDetail}>Xem thông tin các đơn đã đặt</Text>
-                    </View>
-                    <Text style={styles.arrowText}> {'>'} </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => navigation.navigate('Profile', { screen: 'Address' })}
-
-                >
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionText}>Địa chỉ đặt hàng</Text>
-                        <Text style={styles.optionDetail}>Lưu thông tin địa chỉ</Text>
-                    </View>
-                    <Text style={styles.arrowText}> {'>'} </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => navigation.navigate('Profile', { screen: 'PaymentMethod' })}
-
-                    // Điều hướng đến PaymentMethod Screen
-                >
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionText}>Phương thức thanh toán</Text>
-                        <Text style={styles.optionDetail}>Thay đổi phương thức thanh toán</Text>
-                    </View>
-                    <Text style={styles.arrowText}> {'>'} </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => navigation.navigate('MyReviews')} // Điều hướng đến Reviews Screen
-                >
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionText}>Đánh giá của tôi</Text>
-                        <Text style={styles.optionDetail}>Xem các đánh giá</Text>
-                    </View>
-                    <Text style={styles.arrowText}> {'>'} </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => navigation.navigate('Settings')} // Điều hướng đến Settings Screen
-                >
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionText}>Cài đặt</Text>
-                        <Text style={styles.optionDetail}>Thông báo, mật khẩu, liên hệ</Text>
-                    </View>
-                    <Text style={styles.arrowText}> {'>'} </Text>
-                </TouchableOpacity>
+                {[
+                    { label: 'Đơn hàng của tôi', detail: 'Xem thông tin các đơn đã đặt', screen: 'Orders' },
+                    { label: 'Địa chỉ đặt hàng', detail: 'Lưu thông tin địa chỉ', screen: 'Address' },
+                    { label: 'Phương thức thanh toán', detail: 'Thay đổi phương thức thanh toán', screen: 'PaymentMethod' },
+                    { label: 'Đánh giá của tôi', detail: 'Xem các đánh giá', screen: 'MyReviews' },
+                    { label: 'Cài đặt', detail: 'Thông báo, mật khẩu, liên hệ', screen: 'Settings' },
+                ].map((item, index) => (
+                    <TouchableOpacity
+                        key={index}
+                        style={styles.option}
+                        onPress={() => navigation.navigate('Profile', { screen: item.screen })}
+                    >
+                        <View style={styles.optionTextContainer}>
+                            <Text style={styles.optionText}>{item.label}</Text>
+                            <Text style={styles.optionDetail}>{item.detail}</Text>
+                        </View>
+                        <Text style={styles.arrowText}>{'>'}</Text>
+                    </TouchableOpacity>
+                ))}
             </View>
+
+            {/* Nút đăng xuất đẹp và tách riêng */}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Text style={styles.logoutText}>Đăng xuất</Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        // paddingTop: 105,
         flex: 1,
         padding: 20,
         backgroundColor: '#f5f5f5',
+        justifyContent: 'space-between',
     },
     profileContainer: {
-
         flexDirection: 'row',
         marginBottom: 30,
-
     },
     profileImage: {
         width: 80,
@@ -117,20 +98,19 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 10,
         padding: 20,
-        elevation: 2, // Android shadow effect
+        elevation: 2,
     },
     option: {
-        flexDirection: 'row', // Đảm bảo các mục được hiển thị theo hàng ngang
+        flexDirection: 'row',
         justifyContent: 'space-between',
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
         paddingVertical: 15,
-        paddingBottom: 30
     },
     optionTextContainer: {
-        flexDirection: 'column', // Các văn bản được hiển thị theo hàng ngang
+        flexDirection: 'column',
         justifyContent: 'space-between',
-        width: '90%', // Điều chỉnh kích thước
+        width: '90%',
     },
     optionText: {
         fontSize: 18,
@@ -142,6 +122,27 @@ const styles = StyleSheet.create({
     arrowText: {
         fontSize: 20,
         fontWeight: 'bold',
-        //    color: '#888',
+    },
+    logoutButton: {
+        marginTop: 90,
+
+        backgroundColor: 'black',
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        alignItems: 'center',
+        alignSelf: 'center',
+        width: '90%',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    logoutText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
     },
 });

@@ -3,8 +3,9 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ProductCard({ item, navigation }) {
-  const imageUrl = item.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image';
+  const imageUrl = item.images?.[0]?.replace('localhost', '10.0.2.2'); // Thay localhost = 10.0.2.2
 
+  console.log(imageUrl);
   return (
     <View style={styles.card}>
       <View style={styles.imageContainer}>

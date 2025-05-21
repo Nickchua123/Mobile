@@ -26,13 +26,12 @@ function AppWrapper() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthStack} />
-        )}
+      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Login">
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
+        <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
       </Stack.Navigator>
+
     </NavigationContainer>
   );
 }
