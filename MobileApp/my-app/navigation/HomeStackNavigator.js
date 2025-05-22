@@ -7,6 +7,7 @@ import ReviewScreen from '../screens/ReviewScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import SuccessScreen from '../screens/SuccessScreen';
 import ShippingAddressScreen from '../screens/ShippingAddressScreen';
+import AddAddressScreen from '../screens/AddAddressScreen';
 const Stack = createStackNavigator();
 
 export default function HomeStackNavigator() {
@@ -45,7 +46,12 @@ export default function HomeStackNavigator() {
       <Stack.Screen
         name="Address"
         component={ShippingAddressScreen}
-        options={{ headerShown: false }}
+        options={{ headerShown: true }}
+      />
+      <Stack.Screen
+        name="AddAddress"
+        component={AddAddressScreen}
+        options={{ headerShown: true }}
       />
     </Stack.Navigator>
   );

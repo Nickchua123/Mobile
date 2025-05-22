@@ -28,7 +28,12 @@ export default function StackNavigator() {
       <Stack.Screen name="PaymentMethod" component={PaymentMethodScreen} />
       <Stack.Screen name="AddCard" component={AddCardScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
-      {/* <Stack.Screen name="Checkout" component={CheckoutScreen} /> */}
+      {/* <Stack.Screen
+        name="Checkout"
+        component={CheckoutScreen}
+        options={{ headerShown: false }} // ✅ Thêm dòng này để ẩn tiêu đề
+      /> */}
+
 
       {/* <Stack.Screen name="SignUp" component={SignUpScreen} /> */}
       {/* <Stack.Screen name="HomeScreen" component={HomeScreen} /> */}

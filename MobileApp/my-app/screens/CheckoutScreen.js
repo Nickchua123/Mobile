@@ -24,6 +24,9 @@ export default function CheckoutScreen({ route }) {
   const [currentAddress, setCurrentAddress] = useState(null);
   const [isPaymentOnDelivery, setIsPaymentOnDelivery] = useState(false);
   const [isPaymentByCard, setIsPaymentByCard] = useState(false);
+  const { selectedAddress } = route.params || {};
+
+
   const navigation = useNavigation();
 
   const selectedItems = route?.params?.selectedItems || [];
@@ -40,9 +43,15 @@ export default function CheckoutScreen({ route }) {
   }, [selectedItems]);
 
   useEffect(() => {
-    const defaultAddress = addresses.find((address) => address.isDefault === true);
-    setCurrentAddress(defaultAddress);
-  }, [addresses]);
+    if (selectedAddress) {
+      setCurrentAddress(selectedAddress);
+    } else {
+      const defaultAddress = addresses.find(addr => addr.isDefault);
+      setCurrentAddress(defaultAddress);
+    }
+  }, [selectedAddress, addresses]);
+
+
 
   const handleBackPress = () => navigation.goBack();
 
@@ -77,7 +86,7 @@ export default function CheckoutScreen({ route }) {
         customerAddress: currentAddress.address
       };
 
-      console.log("📦 Payload gửi lên:", payload);
+      console.log(" Payload gửi lên:", payload);
 
 
       const res = await orderApi.createOrder(payload);
@@ -112,7 +121,11 @@ export default function CheckoutScreen({ route }) {
           <View style={styles.touchable}>
             <Text style={styles.sectionHeader}>Địa chỉ giao hàng</Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Profile', { screen: 'Address' })}
+              // onPress={() => navigation.navigate('Profile', { screen: 'Address' })}
+              onPress={() => navigation.navigate('Address', {
+                selectedItems: cart  // ✅ truyền giỏ hàng đã chọn sang ShippingAddress
+              })}
+
               style={styles.editIcon}
             >
               <EvilIcons name="pencil" size={30} color="#888" />

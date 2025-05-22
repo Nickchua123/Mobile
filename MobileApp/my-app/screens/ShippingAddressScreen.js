@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import addressApi from '../api/addressApi';
@@ -14,6 +16,8 @@ export default function ShippingAddressScreen({ route }) {
   const navigation = useNavigation();
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const { selectedItems } = route.params || {};
+
 
   const fetchAddresses = async () => {
     try {
@@ -27,13 +31,19 @@ export default function ShippingAddressScreen({ route }) {
     }
   };
 
-  useEffect(() => {
-    fetchAddresses();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchAddresses();
+    }, [])
+  );
+
 
   const handleSelectAddress = (address) => {
     setSelectedAddressId(address.id);
-    navigation.navigate('Checkout', { selectedAddress: address });
+    navigation.navigate('Checkout', {
+      selectedAddress: address,
+      selectedItems: selectedItems  // 👈 truyền thêm giỏ hàng nếu có
+    });
   };
 
   return (
