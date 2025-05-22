@@ -9,6 +9,8 @@ import SuccessScreen from './screens/SuccessScreen';
 import BottomTabNavigator from './navigation/BottomTabNavigation';
 import LoginScreen from './screens/Login';
 import SignUpScreen from './screens/Signup';
+import CheckoutScreen from './screens/CheckoutScreen';
+import ShippingAddressScreen from './screens/ShippingAddressScreen';
 
 const Stack = createStackNavigator();
 
@@ -33,6 +35,9 @@ function AppWrapper() {
         <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
         <Stack.Screen name="PaymentWebview" component={PaymentWebview} />
         <Stack.Screen name="Success" component={SuccessScreen} />
+        {/* <Stack.Screen name="Checkout" component={CheckoutScreen} />
+        <Stack.Screen name="Address" component={ShippingAddressScreen} /> */}
+
       </Stack.Navigator>
 
     </NavigationContainer>

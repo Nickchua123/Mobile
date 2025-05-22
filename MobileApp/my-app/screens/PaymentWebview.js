@@ -11,7 +11,7 @@ export default function PaymentWebview({ route }) {
         const currentUrl = navState.url;
 
         if (currentUrl.includes('vnpay/return')) {  // 
-            navigation.replace('Home');
+            navigation.replace('MainTabs');
         }
 
         if (currentUrl.includes('fail') || currentUrl.includes('cancel')) {

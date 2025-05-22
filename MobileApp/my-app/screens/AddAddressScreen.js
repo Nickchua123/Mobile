@@ -8,62 +8,55 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAddress } from '../contexts/AddressContext';
+import addressApi from '../api/addressApi';
 
 export default function AddAddressScreen() {
   const navigation = useNavigation();
-  const { addAddress } = useAddress();
 
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [isDefault, setIsDefault] = useState(false);
 
-  const handleSaveAddress = () => {
-    if (name === '' || address === '') {
+  const handleSaveAddress = async () => {
+    if (!name || !phone || !email || !address) {
       Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
-    const newAddress = {
-      id: Math.random().toString(36).substring(7),
-      name,
-      address,
-      isDefault,
-    };
-
-    addAddress(newAddress); 
-    navigation.goBack();    // Quay lại màn trước
+    try {
+      await addressApi.add({
+        name,
+        phone,
+        email,
+        address,
+        isDefault
+      });
+      Alert.alert('✅ Thành công', 'Đã lưu địa chỉ');
+      navigation.goBack();
+    } catch (err) {
+      Alert.alert('❌ Lỗi', 'Không thể lưu địa chỉ');
+      console.error(err);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Add New Address</Text>
+      <Text style={styles.title}>Thêm địa chỉ mới</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-      />
+      <TextInput style={styles.input} placeholder="Tên người nhận" value={name} onChangeText={setName} />
+      <TextInput style={styles.input} placeholder="Số điện thoại" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+      <TextInput style={[styles.input, { height: 80 }]} placeholder="Địa chỉ cụ thể" value={address} onChangeText={setAddress} multiline />
 
-      <TextInput
-        style={[styles.input, { height: 80 }]}
-        placeholder="Address"
-        value={address}
-        onChangeText={setAddress}
-        multiline
-      />
-
-      <TouchableOpacity
-        style={styles.checkbox}
-        onPress={() => setIsDefault(!isDefault)}
-      >
+      <TouchableOpacity style={styles.checkbox} onPress={() => setIsDefault(!isDefault)}>
         <View style={[styles.box, isDefault && styles.boxChecked]} />
-        <Text style={styles.checkText}>Set as default address</Text>
+        <Text style={styles.checkText}>Đặt làm mặc định</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={handleSaveAddress}>
-        <Text style={styles.buttonText}>Save</Text>
+        <Text style={styles.buttonText}>Lưu</Text>
       </TouchableOpacity>
     </View>
   );

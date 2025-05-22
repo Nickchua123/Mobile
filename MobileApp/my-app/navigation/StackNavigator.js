@@ -12,6 +12,7 @@ import AddCardScreen from '../screens/AddCardScreen';
 import LoginScreen from '../screens/Login';
 import SignUpScreen from '../screens/Signup';
 import HomeScreen from '../screens/HomeScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
 const Stack = createStackNavigator();
 
 export default function StackNavigator() {
@@ -27,6 +28,8 @@ export default function StackNavigator() {
       <Stack.Screen name="PaymentMethod" component={PaymentMethodScreen} />
       <Stack.Screen name="AddCard" component={AddCardScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      {/* <Stack.Screen name="Checkout" component={CheckoutScreen} /> */}
+
       {/* <Stack.Screen name="SignUp" component={SignUpScreen} /> */}
       {/* <Stack.Screen name="HomeScreen" component={HomeScreen} /> */}
 

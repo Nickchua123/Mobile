@@ -69,16 +69,22 @@ export default function CheckoutScreen({ route }) {
         })),
         addressId: currentAddress.id,
         shippingId: selectedShipping.id,
-        shippingFee: selectedShipping.fee, // ✅ THÊM DÒNG NÀY
-        paymentMethod: isPaymentByCard ? 'vnpay' : 'COD'
+        shippingFee: selectedShipping.fee, // 
+        paymentMethod: isPaymentByCard ? 'vnpay' : 'COD',
+        customerName: currentAddress.name,
+        customerPhone: currentAddress.phone,
+        customerEmail: currentAddress.email,
+        customerAddress: currentAddress.address
       };
-      console.log("Payload gửi lên:", payload);
+
+      console.log("📦 Payload gửi lên:", payload);
+
 
       const res = await orderApi.createOrder(payload);
 
       const paymentUrl = res.data?.data?.paymentUrl; // 👈 đúng key
 
-      console.log("🔗 URL thanh toán VNPAY:", paymentUrl);
+      console.log(" URL thanh toán VNPAY:", paymentUrl);
 
       if (paymentUrl && paymentUrl.startsWith('http')) {
         navigation.navigate('PaymentWebview', { url: paymentUrl });
