@@ -46,7 +46,12 @@ export default function CartScreen() {
   const getTotal = () =>
     cart
       .filter((item) => isSelected(item.id))
-      .reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      .reduce((sum, item) => {
+        const price = Number(item?.product?.price || 0);
+        const qty = Number(item?.quantity || 0);
+        return sum + price * qty;
+      }, 0);
+
 
   const renderItem = ({ item }) => {
     const imageUrl = item.product.images?.[0]?.replace('localhost', '10.0.2.2');

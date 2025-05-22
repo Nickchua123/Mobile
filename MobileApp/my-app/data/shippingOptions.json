@@ -2,12 +2,12 @@
     {
         "id": "fast",
         "label": "🚀 Giao nhanh (1-2 ngày)",
-        "fee": 5.0
+        "fee": 50000.0000
     },
     {
         "id": "standard",
         "label": "📦 Giao tiêu chuẩn (3-5 ngày)",
-        "fee": 2.5
+        "fee": 20000
     },
     {
         "id": "economy",
