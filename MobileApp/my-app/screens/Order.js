@@ -1,167 +1,246 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    Modal,
+    FlatList,
+    Alert,
+} from 'react-native';
+import orderApi from '../api/orderApi';
 
 export default function OrdersScreen() {
-    const [selectedTab, setSelectedTab] = useState('Delivered'); // Mặc định tab "Delivered"
+    const [orders, setOrders] = useState([]);
+    const [selectedTab, setSelectedTab] = useState('Delivered');
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
-    // Danh sách các đơn hàng
-    const orders = [
-        { orderNo: 'Order No238562312', date: '20/03/2020', quantity: 3, totalAmount: 150, status: 'Delivered' },
-        { orderNo: 'Order No238562313', date: '21/03/2020', quantity: 2, totalAmount: 120, status: 'Processing' },
-        { orderNo: 'Order No238562314', date: '22/03/2020', quantity: 5, totalAmount: 250, status: 'Cancelled' },
-        { orderNo: 'Order No238562315', date: '23/03/2020', quantity: 4, totalAmount: 200, status: 'Delivered' },
-        { orderNo: 'Order No238562316', date: '24/03/2020', quantity: 1, totalAmount: 50, status: 'Processing' },
-    ];
+    useEffect(() => {
+        fetchOrders();
+    }, []);
 
-    // Bộ lọc đơn hàng theo trạng thái
+    const fetchOrders = async () => {
+        try {
+            const res = await orderApi.getMyOrders();
+            setOrders(res.data.data.content || []);
+        } catch (error) {
+            console.error('Lỗi lấy đơn hàng:', error);
+        }
+    };
+
+    const handleCancelOrder = async (id) => {
+        Alert.alert('Xác nhận', 'Bạn có chắc muốn huỷ đơn hàng này?', [
+            { text: 'Không', style: 'cancel' },
+            {
+                text: 'Huỷ', style: 'destructive', onPress: async () => {
+                    try {
+                        await orderApi.cancelOrder(id);
+                        fetchOrders();
+                        Alert.alert('Huỷ thành công', 'Đơn hàng đã được huỷ.');
+                    } catch (e) {
+                        console.error('Lỗi huỷ đơn:', e);
+                    }
+                }
+            }
+        ]);
+    };
+
+    const handleViewDetail = (order) => {
+        setSelectedOrder(order);
+        setModalVisible(true);
+    };
+
+    const mapStatus = (status) => {
+        switch (status) {
+            case 'SUCCESS': return 'Delivered';
+            case 'PENDING': return 'Processing';
+            case 'FAILED': return 'Cancelled';
+            default: return 'Unknown';
+        }
+    };
+
     const filteredOrders = orders.filter(order => {
-        if (selectedTab === 'Delivered') return order.status === 'Delivered';
-        if (selectedTab === 'Processing') return order.status === 'Processing';
-        if (selectedTab === 'Cancelled') return order.status === 'Cancelled';
-        return true;
+        const statusLabel = mapStatus(order.paymentStatus);
+        return statusLabel === selectedTab;
     });
 
     return (
         <View style={styles.container}>
-            {/* Thanh Tab */}
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[styles.tabButton, selectedTab === 'Delivered' && styles.selectedTab]}
-                    onPress={() => setSelectedTab('Delivered')}
-                >
-                    <Text style={styles.tabText}>Delivered</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabButton, selectedTab === 'Processing' && styles.selectedTab]}
-                    onPress={() => setSelectedTab('Processing')}
-                >
-                    <Text style={styles.tabText}>Processing</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabButton, selectedTab === 'Cancelled' && styles.selectedTab]}
-                    onPress={() => setSelectedTab('Cancelled')}
-                >
-                    <Text style={styles.tabText}>Cancelled</Text>
-                </TouchableOpacity>
+            <View style={styles.tabs}>
+                {['Processing', 'Delivered', 'Cancelled'].map((tab) => (
+                    <TouchableOpacity
+                        key={tab}
+                        onPress={() => setSelectedTab(tab)}
+                        style={[styles.tab, selectedTab === tab && styles.activeTab]}
+                    >
+                        <Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>{tab}</Text>
+                    </TouchableOpacity>
+                ))}
             </View>
 
-            {/* Danh sách đơn hàng */}
-            <ScrollView style={styles.ordersList}>
-                {filteredOrders.map((order, index) => (
-                    <View key={index} style={styles.orderCard}>
-                        <View style={styles.infor}>
-                            <Text style={styles.orderNo}>{order.orderNo}</Text>
-                            <Text style={styles.orderDate}>{order.date}</Text>
-                        </View>
-                        <Text style={styles.orderQuantity}>Quantity: {order.quantity}</Text>
-                        <Text style={styles.orderAmount}>Total Amount: ${order.totalAmount}</Text>
-                        <View style={styles.buttonRowwithStatus}>
-                            <TouchableOpacity style={styles.detailButton}>
-                                <Text style={styles.detailButtonText}>Detail</Text>
+            <ScrollView style={{ marginTop: 15 }}>
+                {filteredOrders.length === 0 ? (
+                    <Text style={styles.empty}>No orders found.</Text>
+                ) : (
+                    filteredOrders.map((order) => (
+                        <View key={order.id} style={styles.orderCard}>
+                            <Text style={styles.orderId}>Order #{order.id}</Text>
+                            <Text style={styles.detail}>Recipient: {order.customerName}</Text>
+                            <Text style={styles.detail}>Total: {order.totalAmount.toLocaleString()} VND</Text>
+                            <Text style={styles.detail}>Payment: {mapStatus(order.paymentStatus)}</Text>
+                            <Text style={styles.detail}>Shipping: {order.shippingMethod}</Text>
+                            <Text style={styles.detail}>Date: {new Date(order.orderDate).toLocaleDateString()}</Text>
+
+                            <TouchableOpacity
+                                onPress={() => handleViewDetail(order)}
+                                style={styles.detailBtn}
+                            >
+                                <Text style={styles.detailBtnText}>Xem chi tiết</Text>
                             </TouchableOpacity>
-                            <Text style={[styles.status, order.status === 'Delivered' && styles.delivered,
-                            order.status === 'Cancelled' && styles.cancelled
-                                , order.status === 'Processing' && styles.processing]}>
-                                {order.status}
-                            </Text>
+
+                            {selectedTab === 'Processing' && (
+                                <TouchableOpacity
+                                    onPress={() => handleCancelOrder(order.id)}
+                                    style={[styles.detailBtn, { backgroundColor: 'red' }]}
+                                >
+                                    <Text style={styles.detailBtnText}>Huỷ đơn hàng</Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {selectedTab === 'Delivered' && (
+                                <TouchableOpacity
+                                    onPress={() => Alert.alert('Viết đánh giá', 'Tính năng đánh giá đang được phát triển.')}
+                                    style={[styles.detailBtn, { backgroundColor: 'green' }]}
+                                >
+                                    <Text style={styles.detailBtnText}>Viết đánh giá</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
-                    </View>
-                ))}
+                    ))
+                )}
             </ScrollView>
+
+            <Modal visible={modalVisible} transparent animationType="slide">
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContentEnhanced}>
+                        <Text style={styles.modalTitle}>Thông tin Đơn hàng #{selectedOrder?.id}</Text>
+                        <View style={styles.separator} />
+                        <FlatList
+                            data={selectedOrder?.items || []}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <View style={styles.itemRow}>
+                                    <Text style={styles.itemText}>{item.productName}</Text>
+                                    <Text style={styles.itemText}>x{item.quantity}</Text>
+                                    <Text style={styles.itemText}>{item.price.toLocaleString()} VND</Text>
+                                </View>
+                            )}
+                        />
+                        <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.detailBtn}>
+                            <Text style={styles.detailBtnText}>Đóng</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#f5f5f5',
-    },
-    tabContainer: {
+    container: { flex: 1, backgroundColor: '#fff', paddingTop: 40, paddingHorizontal: 15 },
+    tabs: {
         flexDirection: 'row',
-        marginBottom: 20,
+        justifyContent: 'space-around',
     },
-    tabButton: {
-        flex: 1,
-        paddingTop: 5,
-        alignItems: 'center',
-
-        justifyContent: 'center',
-        // backgroundColor: '#ddd',
-        borderRadius: 5,
-        borderBottomWidth: 3, // Thêm đường viền dưới
-        borderBottomColor: 'transparent', // Mặc định không có màu viền
-        margin: 5,
+    tab: {
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+        backgroundColor: '#eee',
     },
-    selectedTab: {
-        // backgroundColor: '#3498db',
-        borderBottomColor: '#242424', // Màu viền dưới khi tab được chọn
+    activeTab: {
+        backgroundColor: '#000',
     },
     tabText: {
-        fontSize: 16,
+        color: '#444',
         fontWeight: 'bold',
-        color: '#242424',
     },
-    ordersList: {
-        marginTop: 20,
+    activeTabText: {
+        color: '#fff',
     },
     orderCard: {
-        backgroundColor: '#fff',
         padding: 15,
-        marginBottom: 15,
         borderRadius: 10,
-        elevation: 2, // Android shadow effect
+        backgroundColor: '#f5f5f5',
+        marginBottom: 15,
     },
-    infor: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    orderNo: {
-        fontSize: 18,
+    orderId: {
         fontWeight: 'bold',
+        fontSize: 16,
+        marginBottom: 8,
     },
-    orderDate: {
+    detail: {
         fontSize: 14,
+        color: '#555',
+        marginBottom: 4,
+    },
+    empty: {
+        textAlign: 'center',
+        fontStyle: 'italic',
+        marginTop: 30,
         color: '#888',
     },
-    orderQuantity: {
-        fontSize: 14,
-    },
-    orderAmount: {
-        fontSize: 14,
-    },
-    status: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        paddingTop: 20,
-    },
-    delivered: {
-        color: 'green',
-    },
-    processing: {
-        color: 'orange',
-    },
-    cancelled: {
-        color: 'red',
-    },
-    detailButton: {
+    detailBtn: {
         marginTop: 10,
         backgroundColor: '#000',
         paddingVertical: 10,
-        borderRadius: 5,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+    },
+    detailBtnText: {
+        color: '#fff',
+        textAlign: 'center',
+        fontWeight: 'bold',
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    detailButtonText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
-        width: 80,
-        height: 20,
-        textAlign: 'center'
+    modalContentEnhanced: {
+        width: '90%',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
     },
-    buttonRowwithStatus: {
+    modalTitle: {
+        fontWeight: 'bold',
+        fontSize: 18,
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    itemRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        paddingVertical: 6,
+        borderBottomWidth: 1,
+        borderColor: '#eee',
+    },
+    itemText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#ccc',
+        marginVertical: 10,
     },
 });

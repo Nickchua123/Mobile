@@ -11,13 +11,13 @@ import {
   NativeEventEmitter,
   NativeModules,
   Alert,
+  ToastAndroid,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import useCartCount from '../hooks/useCartCount';
 
-// 👇 Tạo EventBus tương thích React Native
 const eventBus = new NativeEventEmitter(NativeModules.UIManager);
 
 export default function FavoriteScreen({ navigation }) {
@@ -40,6 +40,7 @@ export default function FavoriteScreen({ navigation }) {
     const updated = favorites.filter((item) => item.id !== id);
     setFavorites(updated);
     await AsyncStorage.setItem('favorites', JSON.stringify(updated));
+    ToastAndroid.show('🗑️ Đã xoá khỏi danh sách yêu thích', ToastAndroid.SHORT);
   };
 
   const addToCart = async (item) => {
@@ -62,8 +63,8 @@ export default function FavoriteScreen({ navigation }) {
       }
 
       await AsyncStorage.setItem('cart', JSON.stringify(cart));
-      eventBus.emit('cartUpdated'); // ✅ Trigger cập nhật giỏ
-      Alert.alert('🛒 Thành công', 'Sản phẩm đã được thêm vào giỏ hàng!');
+      eventBus.emit('cartUpdated');
+      ToastAndroid.show('✅ Đã thêm vào giỏ hàng', ToastAndroid.SHORT);
     } catch (e) {
       console.error('Lỗi thêm vào giỏ hàng:', e);
     }
@@ -90,8 +91,8 @@ export default function FavoriteScreen({ navigation }) {
     });
 
     await AsyncStorage.setItem('cart', JSON.stringify(cart));
-    eventBus.emit('cartUpdated'); // ✅ cập nhật icon giỏ
-    Alert.alert('🛒 Thành công',`Đã thêm tất cả ${favorites.length} sản phẩm vào giỏ hàng!`);
+    eventBus.emit('cartUpdated');
+    ToastAndroid.show(`✅ Đã thêm ${favorites.length} sản phẩm vào giỏ hàng`, ToastAndroid.SHORT);
   };
 
   const filteredFavorites = favorites.filter((item) =>
@@ -100,10 +101,13 @@ export default function FavoriteScreen({ navigation }) {
 
   const renderItem = ({ item }) => (
     <View style={styles.item}>
-      <Image source={item.img} style={styles.image} />
+      <Image
+        source={{ uri: item.images?.[0]?.replace('localhost', '10.0.2.2') }}
+        style={styles.image}
+      />
       <View style={styles.info}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.price}>{item.price.toLocaleString()} VND</Text>
       </View>
       <TouchableOpacity onPress={() => removeFavorite(item.id)}>
         <Ionicons name="close" size={22} color="#333" />
@@ -116,7 +120,6 @@ export default function FavoriteScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setSearchVisible(!searchVisible)}>
           <Ionicons
@@ -136,7 +139,6 @@ export default function FavoriteScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Search Box */}
       {searchVisible && (
         <TextInput
           placeholder="Search favorites..."
@@ -146,7 +148,6 @@ export default function FavoriteScreen({ navigation }) {
         />
       )}
 
-      {/* List */}
       <FlatList
         data={filteredFavorites}
         keyExtractor={(item) => item.id.toString()}
@@ -154,7 +155,6 @@ export default function FavoriteScreen({ navigation }) {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
 
-      {/* Add all to cart */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity style={styles.addAllButton} onPress={handleAddAllToCart}>
           <Text style={styles.addAllText}>Add all to my cart</Text>
