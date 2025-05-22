@@ -10,18 +10,19 @@ export default function PaymentWebview({ route }) {
     const handleNavChange = (navState) => {
         const currentUrl = navState.url;
 
-        if (currentUrl.includes('payment-success')) {
-            navigation.replace('Success');
+        if (currentUrl.includes('vnpay/return')) {  // 
+            navigation.replace('Home');
         }
 
-        if (currentUrl.includes('payment-cancel') || currentUrl.includes('fail')) {
-            navigation.goBack();
+        if (currentUrl.includes('fail') || currentUrl.includes('cancel')) {
+            navigation.goBack(); // hoặc navigation.replace('Fail') nếu có
         }
     };
 
     return (
         <View style={styles.container}>
             <WebView
+                style={{ marginTop: 30 }}
                 source={{ uri: url }}
                 onNavigationStateChange={handleNavChange}
                 startInLoadingState
@@ -35,5 +36,10 @@ export default function PaymentWebview({ route }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    loader: { position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }] },
+    loader: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: [{ translateX: -25 }, { translateY: -25 }]
+    },
 });

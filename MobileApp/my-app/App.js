@@ -4,7 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AddressProvider } from './contexts/AddressContext'; // ✅ THÊM
-
+import PaymentWebview from './screens/PaymentWebview';
+import SuccessScreen from './screens/SuccessScreen';
 import BottomTabNavigator from './navigation/BottomTabNavigation';
 import LoginScreen from './screens/Login';
 import SignUpScreen from './screens/Signup';
@@ -30,6 +31,8 @@ function AppWrapper() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
         <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+        <Stack.Screen name="PaymentWebview" component={PaymentWebview} />
+        <Stack.Screen name="Success" component={SuccessScreen} />
       </Stack.Navigator>
 
     </NavigationContainer>
